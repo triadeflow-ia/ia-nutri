@@ -1,0 +1,115 @@
+# Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
+
+# dependencies
+node_modules/
+
+# Expo
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+
+# Native
+android/
+ios/
+.kotlin/
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.keystore
+
+# Metro
+.metro-health-check*
+
+# debug
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# macOS
+.DS_Store
+*.pem
+
+# local env files
+.env
+.env.*
+.env.local
+.env.development
+.env.production
+
+# typescript
+*.tsbuildinfo
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+.venv
+
+# Logs
+*.log
+app.log
+function_calling.log
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+*.backup
+*.dump
+railway_backup.dump
+aichats_db.backup
+
+# Build outputs
+build/
+dist/
+.next/
+coverage/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+
+# Temporary files
+*.tmp
+*.temp
+*.cache
+.cache/
+tmp/
+temp/
+
+# OS generated
+Thumbs.db
+.Spotlight-V100
+.Trashes
+
+# Certificates and keys
+*.pem
+*.crt
+*.cer
+cookies.txt
+
+# Large files
+large-objects.txt
+pixels_data.json
+
+# Package locks (if you want to ignore them)
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
