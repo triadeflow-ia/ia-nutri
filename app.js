@@ -25,8 +25,16 @@ app.use(limiter);
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Conectar Redis
-await redisClient.connect();
+// Conectar Redis (opcional se variáveis não definidas)
+try {
+  if (process.env.REDIS_URL && process.env.REDIS_PASSWORD) {
+    await redisClient.connect();
+  } else {
+    console.warn('Redis não configurado (REDIS_URL/REDIS_PASSWORD ausentes). Inicializando sem Redis.');
+  }
+} catch (err) {
+  console.warn('Falha ao conectar no Redis. Servidor continuará sem Redis.', err?.message || err);
+}
 
 // Rotas
 app.use('/webhook', webhookRoutes);

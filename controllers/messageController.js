@@ -131,60 +131,83 @@ async function handleTextMessage(message, phoneNumber, profileName, phoneNumberI
 
   // Processar mensagens após 4 segundos
   bufferTimeouts.set(phoneNumber, setTimeout(async () => {
-    const bufferedMessages = messageBuffers.get(phoneNumber).join(' ');
-    messageBuffers.delete(phoneNumber);
-    bufferTimeouts.delete(phoneNumber);
+    try {
+      const bufferedMessages = messageBuffers.get(phoneNumber).join(' ');
+      messageBuffers.delete(phoneNumber);
+      bufferTimeouts.delete(phoneNumber);
 
-    const currentDate = getCurrentDate();
-    
-    // Adiciona contexto do nome do usuário na mensagem
-    const messageWithContext = `[Usuário ${profileName} diz:] ${bufferedMessages} [Data: ${currentDate}]`;
-    
-    const formattedMessage = formatMessageWithDate(
-      messageWithContext,
-      message.timestamp,
-      profileName
-    );
+      const currentDate = getCurrentDate();
+      
+      // Adiciona contexto do nome do usuário na mensagem
+      const messageWithContext = `[Usuário ${profileName} diz:] ${bufferedMessages} [Data: ${currentDate}]`;
+      
+      const formattedMessage = formatMessageWithDate(
+        messageWithContext,
+        message.timestamp,
+        profileName
+      );
 
-    // Armazenar mensagem do usuário
-    await redisService.storeMessageInConversation(phoneNumber, threadId, {
-      role: 'user',
-      content: formattedMessage,
-      timestamp: Date.now()
-    });
+      // Armazenar mensagem do usuário
+      await redisService.storeMessageInConversation(phoneNumber, threadId, {
+        role: 'user',
+        content: formattedMessage,
+        timestamp: Date.now()
+      });
 
-    // Verificar e gerenciar tokens
-    const totalTokens = await openaiService.getTokenUsage(threadId);
-    
-    if (totalTokens > 1000000) {
-      threadId = await handleTokenLimit(phoneNumber, threadId, formattedMessage);
-    } else {
-      await openaiService.addMessageWithRetry(threadId, formattedMessage);
+      // Verificar e gerenciar tokens
+      let totalTokens = 0;
+      try {
+        totalTokens = await openaiService.getTokenUsage(threadId);
+      } catch (tokenErr) {
+        console.warn('Falha ao obter uso de tokens (continuando):', tokenErr?.message || tokenErr);
+      }
+      
+      if (totalTokens > 1000000) {
+        threadId = await handleTokenLimit(phoneNumber, threadId, formattedMessage);
+      } else {
+        await openaiService.addMessageWithRetry(threadId, formattedMessage);
+      }
+
+      // Processar com OpenAI
+      const whatsappData = {
+        phoneNumberId: phoneNumberId,
+        recipientNumber: message.from
+      };
+
+      const assistantResponse = await openaiService.runAssistant(threadId, whatsappData);
+
+      // Armazenar resposta do assistente
+      await redisService.storeMessageInConversation(phoneNumber, threadId, {
+        role: 'assistant',
+        content: assistantResponse,
+        timestamp: Date.now()
+      });
+
+      // Enviar resposta
+      await whatsappService.sendReplyWithTimeout(
+        phoneNumberId,
+        config.whatsapp.graphApiToken,
+        message.from,
+        assistantResponse,
+        res
+      );
+    } catch (error) {
+      console.error('Erro ao processar mensagens em buffer:', error);
+      try {
+        await whatsappService.sendSplitReply(
+          phoneNumberId,
+          config.whatsapp.graphApiToken,
+          message.from,
+          'Tive um problema temporário ao responder. Pode repetir sua última mensagem?',
+          res
+        );
+      } catch (fallbackErr) {
+        console.error('Erro ao enviar mensagem de fallback:', fallbackErr);
+        if (!res.headersSent) {
+          res.sendStatus(200);
+        }
+      }
     }
-
-    // Processar com OpenAI
-    const whatsappData = {
-      phoneNumberId: phoneNumberId,
-      recipientNumber: message.from
-    };
-
-    const assistantResponse = await openaiService.runAssistant(threadId, whatsappData);
-
-    // Armazenar resposta do assistente
-    await redisService.storeMessageInConversation(phoneNumber, threadId, {
-      role: 'assistant',
-      content: assistantResponse,
-      timestamp: Date.now()
-    });
-
-    // Enviar resposta
-    await whatsappService.sendReplyWithTimeout(
-      phoneNumberId,
-      config.whatsapp.graphApiToken,
-      message.from,
-      assistantResponse,
-      res
-    );
   }, 4000));
 }
 
