@@ -17,7 +17,18 @@ const optionalButRecommended = [
   'SERVER_URL',
   'BING_API_KEY',
   'REDIS_PASSWORD',
-  'REDIS_URL'
+  'REDIS_URL',
+  // Stripe
+  'STRIPE_SECRET_KEY',
+  'STRIPE_WEBHOOK_SECRET',
+  'STRIPE_PUBLISHABLE_KEY',
+  'STRIPE_PRICE_MONTHLY',
+  'STRIPE_PRICE_QUARTERLY',
+  'STRIPE_PRICE_ANNUAL',
+  // WhatsApp Templates
+  'WHATSAPP_TEMPLATE_WELCOME',
+  'WHATSAPP_TEMPLATE_CONSENT',
+  'WHATSAPP_TEMPLATE_ANAMNESE'
 ];
 
 const missingRequired = requiredEnvVars.filter(name => !process.env[name]);
@@ -53,6 +64,25 @@ export const config = {
   whatsapp: {
     graphApiToken: process.env.GRAPH_API_TOKEN,
     aiPhoneNumber: process.env.AI_NUMBER,
+    phoneNumberId: process.env.PHONE_NUMBER_ID,
+    templates: {
+      welcome: process.env.WHATSAPP_TEMPLATE_WELCOME,
+      consent: process.env.WHATSAPP_TEMPLATE_CONSENT,
+      anamnese: process.env.WHATSAPP_TEMPLATE_ANAMNESE,
+    }
+  },
+  stripe: {
+    secretKey: process.env.STRIPE_SECRET_KEY,
+    publishableKey: process.env.STRIPE_PUBLISHABLE_KEY,
+    webhookSecret: process.env.STRIPE_WEBHOOK_SECRET,
+    prices: {
+      monthly: process.env.STRIPE_PRICE_MONTHLY,
+      quarterly: process.env.STRIPE_PRICE_QUARTERLY,
+      annual: process.env.STRIPE_PRICE_ANNUAL,
+    },
+    webhookUrl: process.env.STRIPE_WEBHOOK_URL,
+    successUrl: process.env.STRIPE_SUCCESS_URL,
+    cancelUrl: process.env.STRIPE_CANCEL_URL,
   },
   bing: {
     apiKey: process.env.BING_API_KEY,

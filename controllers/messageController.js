@@ -6,6 +6,10 @@ import * as openaiService from '../services/openaiService.js';
 import * as whatsappService from '../services/whatsappService.js';
 import * as mediaService from '../services/mediaService.js';
 import * as audioService from '../services/audioService.js';
+import * as onboardingService from '../services/onboardingService.js';
+import * as anamneseService from '../services/anamneseService.js';
+import * as flowService from '../services/flowService.js';
+import * as alertService from '../services/alertService.js';
 import { config } from '../config/index.js';
 import moment from 'moment-timezone';
 
@@ -121,6 +125,28 @@ async function handleTextMessage(message, phoneNumber, profileName, phoneNumberI
   // Comando especial para resetar memória
   if (userMessage.includes("/reset") || userMessage.includes("reset") || userMessage.includes("zerar memória")) {
     await resetUserMemory(phoneNumber, phoneNumberId, res);
+    return;
+  }
+
+  // Verificar se está em processo de onboarding/consentimento
+  const onboardingStatus = await onboardingService.getOnboardingStatus(phoneNumber);
+  if (onboardingStatus && onboardingStatus.status === 'started') {
+    await handleOnboardingResponse(phoneNumber, phoneNumberId, userMessage, res);
+    return;
+  }
+
+  // Verificar se está em processo de anamnese (Flow)
+  const flowStatus = await flowService.getFlowStatus(phoneNumber);
+  if (flowStatus && flowStatus.status === 'started') {
+    // Aguardar resposta do Flow via webhook
+    console.log('Usuário está em processo de Flow, aguardando resposta via webhook');
+    return;
+  }
+
+  // Verificar se está em processo de anamnese (tradicional)
+  const anamneseStatus = await anamneseService.getAnamneseData(phoneNumber);
+  if (anamneseStatus && anamneseStatus.status === 'started') {
+    await anamneseService.processAnamneseAnswer(phoneNumber, userMessage);
     return;
   }
 
@@ -456,5 +482,18 @@ export const resetUserMemory = async (phoneNumber, phoneNumberId, res) => {
       "❌ Ocorreu um erro ao resetar a memória. Tente novamente em alguns instantes.",
       res
     );
+  }
+};
+
+// Função para lidar com respostas de onboarding
+const handleOnboardingResponse = async (phoneNumber, phoneNumberId, userMessage, res) => {
+  try {
+    const consentGiven = userMessage.includes('sim') || userMessage.includes('autorizo') || 
+                        userMessage.includes('✅') || userMessage.includes('yes');
+    
+    await onboardingService.handleConsentResponse(phoneNumber, consentGiven);
+    
+  } catch (error) {
+    console.error('Error handling onboarding response:', error);
   }
 };

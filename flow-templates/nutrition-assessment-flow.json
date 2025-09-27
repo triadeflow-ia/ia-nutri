@@ -1,0 +1,316 @@
+{
+    "version": "7.2",
+    "screens": [
+        {
+            "id": "PERSONAL_INFO",
+            "title": "Informações Pessoais",
+            "data": {},
+            "layout": {
+                "type": "SingleColumnLayout",
+                "children": [
+                    {
+                        "type": "Form",
+                        "name": "form",
+                        "children": [
+                            {
+                                "type": "TextHeading",
+                                "text": "Primeiro, me conte sobre você:"
+                            },
+                            {
+                                "type": "TextInput",
+                                "label": "Nome completo",
+                                "required": true,
+                                "name": "name"
+                            },
+                            {
+                                "type": "TextInput",
+                                "label": "Idade",
+                                "required": true,
+                                "name": "age"
+                            },
+                            {
+                                "type": "TextInput",
+                                "label": "Altura (cm)",
+                                "required": true,
+                                "name": "height"
+                            },
+                            {
+                                "type": "TextInput",
+                                "label": "Peso atual (kg)",
+                                "required": true,
+                                "name": "weight"
+                            },
+                            {
+                                "type": "Footer",
+                                "label": "Continuar",
+                                "on-click-action": {
+                                    "name": "navigate",
+                                    "next": {
+                                        "type": "screen",
+                                        "name": "OBJECTIVES"
+                                    },
+                                    "payload": {
+                                        "screen_0_name": "${form.name}",
+                                        "screen_0_age": "${form.age}",
+                                        "screen_0_height": "${form.height}",
+                                        "screen_0_weight": "${form.weight}"
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            "id": "OBJECTIVES",
+            "title": "Objetivos",
+            "data": {
+                "screen_0_name": {
+                    "type": "string",
+                    "__example__": "João Silva"
+                },
+                "screen_0_age": {
+                    "type": "string",
+                    "__example__": "30"
+                },
+                "screen_0_height": {
+                    "type": "string",
+                    "__example__": "175"
+                },
+                "screen_0_weight": {
+                    "type": "string",
+                    "__example__": "70"
+                }
+            },
+            "layout": {
+                "type": "SingleColumnLayout",
+                "children": [
+                    {
+                        "type": "Form",
+                        "name": "form",
+                        "children": [
+                            {
+                                "type": "TextHeading",
+                                "text": "Qual é seu principal objetivo?"
+                            },
+                            {
+                                "type": "RadioButtonsGroup",
+                                "label": "Selecione seu objetivo:",
+                                "required": true,
+                                "name": "objective",
+                                "data-source": [
+                                    {
+                                        "id": "lose_weight",
+                                        "title": "Perder peso"
+                                    },
+                                    {
+                                        "id": "gain_muscle",
+                                        "title": "Ganhar massa muscular"
+                                    },
+                                    {
+                                        "id": "maintain",
+                                        "title": "Manter peso atual"
+                                    },
+                                    {
+                                        "id": "health",
+                                        "title": "Melhorar saúde geral"
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "Footer",
+                                "label": "Continuar",
+                                "on-click-action": {
+                                    "name": "navigate",
+                                    "next": {
+                                        "type": "screen",
+                                        "name": "ACTIVITY"
+                                    },
+                                    "payload": {
+                                        "screen_1_objective": "${form.objective}",
+                                        "screen_0_name": "${data.screen_0_name}",
+                                        "screen_0_age": "${data.screen_0_age}",
+                                        "screen_0_height": "${data.screen_0_height}",
+                                        "screen_0_weight": "${data.screen_0_weight}"
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            "id": "ACTIVITY",
+            "title": "Atividade Física",
+            "data": {
+                "screen_1_objective": {
+                    "type": "string",
+                    "__example__": "lose_weight"
+                },
+                "screen_0_name": {
+                    "type": "string",
+                    "__example__": "João Silva"
+                },
+                "screen_0_age": {
+                    "type": "string",
+                    "__example__": "30"
+                },
+                "screen_0_height": {
+                    "type": "string",
+                    "__example__": "175"
+                },
+                "screen_0_weight": {
+                    "type": "string",
+                    "__example__": "70"
+                }
+            },
+            "layout": {
+                "type": "SingleColumnLayout",
+                "children": [
+                    {
+                        "type": "Form",
+                        "name": "form",
+                        "children": [
+                            {
+                                "type": "TextHeading",
+                                "text": "Nível de atividade física"
+                            },
+                            {
+                                "type": "RadioButtonsGroup",
+                                "label": "Como você descreveria seu nível de atividade?",
+                                "required": true,
+                                "name": "activity_level",
+                                "data-source": [
+                                    {
+                                        "id": "sedentary",
+                                        "title": "Sedentário"
+                                    },
+                                    {
+                                        "id": "light",
+                                        "title": "Levemente ativo"
+                                    },
+                                    {
+                                        "id": "moderate",
+                                        "title": "Moderadamente ativo"
+                                    },
+                                    {
+                                        "id": "active",
+                                        "title": "Muito ativo"
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "Footer",
+                                "label": "Continuar",
+                                "on-click-action": {
+                                    "name": "navigate",
+                                    "next": {
+                                        "type": "screen",
+                                        "name": "PREFERENCES"
+                                    },
+                                    "payload": {
+                                        "screen_2_activity_level": "${form.activity_level}",
+                                        "screen_1_objective": "${data.screen_1_objective}",
+                                        "screen_0_name": "${data.screen_0_name}",
+                                        "screen_0_age": "${data.screen_0_age}",
+                                        "screen_0_height": "${data.screen_0_height}",
+                                        "screen_0_weight": "${data.screen_0_weight}"
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            "id": "PREFERENCES",
+            "title": "Preferências",
+            "data": {
+                "screen_2_activity_level": {
+                    "type": "string",
+                    "__example__": "moderate"
+                },
+                "screen_1_objective": {
+                    "type": "string",
+                    "__example__": "lose_weight"
+                },
+                "screen_0_name": {
+                    "type": "string",
+                    "__example__": "João Silva"
+                },
+                "screen_0_age": {
+                    "type": "string",
+                    "__example__": "30"
+                },
+                "screen_0_height": {
+                    "type": "string",
+                    "__example__": "175"
+                },
+                "screen_0_weight": {
+                    "type": "string",
+                    "__example__": "70"
+                }
+            },
+            "terminal": true,
+            "success": true,
+            "layout": {
+                "type": "SingleColumnLayout",
+                "children": [
+                    {
+                        "type": "Form",
+                        "name": "form",
+                        "children": [
+                            {
+                                "type": "TextHeading",
+                                "text": "Preferências alimentares"
+                            },
+                            {
+                                "type": "RadioButtonsGroup",
+                                "label": "Tipo de dieta:",
+                                "required": true,
+                                "name": "diet_type",
+                                "data-source": [
+                                    {
+                                        "id": "omnivore",
+                                        "title": "Onívora"
+                                    },
+                                    {
+                                        "id": "vegetarian",
+                                        "title": "Vegetariana"
+                                    },
+                                    {
+                                        "id": "vegan",
+                                        "title": "Vegana"
+                                    },
+                                    {
+                                        "id": "keto",
+                                        "title": "Cetogênica"
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "Footer",
+                                "label": "Finalizar",
+                                "on-click-action": {
+                                    "name": "complete",
+                                    "payload": {
+                                        "screen_4_diet_type": "${form.diet_type}",
+                                        "screen_2_activity_level": "${data.screen_2_activity_level}",
+                                        "screen_1_objective": "${data.screen_1_objective}",
+                                        "screen_0_name": "${data.screen_0_name}",
+                                        "screen_0_age": "${data.screen_0_age}",
+                                        "screen_0_height": "${data.screen_0_height}",
+                                        "screen_0_weight": "${data.screen_0_weight}"
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                ]
+            }
+        }
+    ]
+}

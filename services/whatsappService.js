@@ -238,3 +238,58 @@ export async function sendMediaMessage(phoneNumberId, recipientNumber, mediaMess
     req.end();
   });
 }
+
+// Função para enviar template do WhatsApp
+export async function sendTemplate(phoneNumberId, whatsappToken, to, templateName, language = 'pt_BR', components = []) {
+  const json = {
+    messaging_product: "whatsapp",
+    to: to,
+    type: "template",
+    template: {
+      name: templateName,
+      language: {
+        code: language
+      },
+      components: components
+    }
+  };
+
+  const data = JSON.stringify(json);
+  const requestPath = `/v19.0/${phoneNumberId}/messages?access_token=${whatsappToken}`;
+  const options = {
+    host: "graph.facebook.com",
+    path: requestPath,
+    method: "POST",
+    headers: { "Content-Type": "application/json" }
+  };
+
+  console.log(`Enviando template ${templateName} para: ${to}`);
+
+  return new Promise((resolve, reject) => {
+    const req = https.request(options, (response) => {
+      let responseData = '';
+      
+      response.on('data', (chunk) => {
+        responseData += chunk;
+      });
+
+      response.on('end', () => {
+        console.log(`Resposta template ${templateName}: ${responseData}`);
+        if (response.statusCode === 200) {
+          resolve(JSON.parse(responseData));
+        } else {
+          console.error(`Falha ao enviar template ${templateName}: ${response.statusCode}, Resposta: ${responseData}`);
+          reject(new Error(`Falha no envio: ${response.statusCode}`));
+        }
+      });
+    });
+
+    req.on('error', (e) => {
+      console.error(`Erro ao enviar template ${templateName}:`, e.message);
+      reject(e);
+    });
+
+    req.write(data);
+    req.end();
+  });
+}

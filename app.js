@@ -14,6 +14,8 @@ import { limiter } from './config/rateLimiter.js';
 // Rotas
 import webhookRoutes from './routes/webhook.js';
 import audioRoutes from './routes/audio.js';
+import stripeRoutes from './routes/stripe.js';
+import testRoutes from './routes/test.js';
 
 dotenv.config();
 
@@ -62,6 +64,8 @@ app.get('/health', (req, res) => {
 // Rotas
 app.use('/webhook', webhookRoutes);
 app.use('/audio', audioRoutes);
+app.use('/stripe', stripeRoutes);
+app.use('/test', testRoutes);
 
 const PORT = process.env.PORT || 1337;
 app.listen(PORT, () => {
