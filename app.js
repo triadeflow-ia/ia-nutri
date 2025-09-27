@@ -36,6 +36,29 @@ try {
   console.warn('Falha ao conectar no Redis. Servidor continuará sem Redis.', err?.message || err);
 }
 
+// Rota principal
+app.get('/', (req, res) => {
+  res.json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    version: '2.0.0',
+    message: 'IA Atendimento Bot - Sistema de Atendimento via WhatsApp com IA'
+  });
+});
+
+// Health check
+app.get('/health', (req, res) => {
+  res.json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    version: '2.0.0',
+    memory: process.memoryUsage(),
+    redis: redisClient.isOpen ? 'connected' : 'disconnected'
+  });
+});
+
 // Rotas
 app.use('/webhook', webhookRoutes);
 app.use('/audio', audioRoutes);
