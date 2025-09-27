@@ -172,8 +172,8 @@ export async function sendReplyWithTimeout(phone_number_id, whatsapp_token, to, 
   const sendFinalReply = async (finalMessage) => {
     try {
       clearTimeout(delayTimeout);
-      // Usa sendSplitReply para fracionar a mensagem
-      await sendSplitReply(phone_number_id, whatsapp_token, to, finalMessage, resp);
+      // Usa sendReply para enviar a mensagem completa (sem quebrar)
+      await sendReply(phone_number_id, whatsapp_token, to, finalMessage, resp);
       isReplySent = true;
     } catch (error) {
       console.error("Erro ao enviar resposta final:", error);
