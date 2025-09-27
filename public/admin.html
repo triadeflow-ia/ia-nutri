@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - IA Atendimento Bot</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .status-healthy {
+            background-color: #4CAF50;
+        }
+
+        .status-unhealthy {
+            background-color: #f44336;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .stat-item:last-child {
+            border-bottom: none;
+        }
+
+        .stat-label {
+            color: #666;
+            font-weight: 500;
+        }
+
+        .stat-value {
+            color: #333;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .refresh-btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin: 20px auto;
+            display: block;
+        }
+
+        .refresh-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .loading {
+            text-align: center;
+            color: #666;
+            font-style: italic;
+        }
+
+        .error {
+            color: #f44336;
+            text-align: center;
+            padding: 20px;
+            background: #ffebee;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        .timestamp {
+            text-align: center;
+            color: #666;
+            font-size: 0.9rem;
+            margin-top: 20px;
+        }
+
+        .chart-container {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            margin-top: 20px;
+        }
+
+        .chart-placeholder {
+            height: 200px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #666;
+            font-style: italic;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 Dashboard IA Atendimento</h1>
+            <p>Monitoramento em tempo real do bot de atendimento</p>
+        </div>
+
+        <button class="refresh-btn" onclick="refreshData()">
+            🔄 Atualizar Dados
+        </button>
+
+        <div id="loading" class="loading">
+            Carregando dados...
+        </div>
+
+        <div id="error" class="error" style="display: none;">
+            Erro ao carregar dados. Tente novamente.
+        </div>
+
+        <div id="dashboard" class="dashboard" style="display: none;">
+            <!-- Health Status Card -->
+            <div class="card">
+                <h3>
+                    <span class="status-indicator" id="health-status"></span>
+                    Status do Sistema
+                </h3>
+                <div class="stat-item">
+                    <span class="stat-label">Status:</span>
+                    <span class="stat-value" id="system-status">-</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Uptime:</span>
+                    <span class="stat-value" id="uptime">-</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Redis:</span>
+                    <span class="stat-value" id="redis-status">-</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Memória:</span>
+                    <span class="stat-value" id="memory-usage">-</span>
+                </div>
+            </div>
+
+            <!-- Messages Card -->
+            <div class="card">
+                <h3>📨 Mensagens</h3>
+                <div class="stat-item">
+                    <span class="stat-label">Total:</span>
+                    <span class="stat-value" id="total-messages">-</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Hoje:</span>
+                    <span class="stat-value" id="today-messages">-</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Últimas 24h:</span>
+                    <span class="stat-value" id="last24h-messages">-</span>
+                </div>
+            </div>
+
+            <!-- Users Card -->
+            <div class="card">
+                <h3>👥 Usuários</h3>
+                <div class="stat-item">
+                    <span class="stat-label">Ativos:</span>
+                    <span class="stat-value" id="active-users">-</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Hoje:</span>
+                    <span class="stat-value" id="today-users">-</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Últimas 24h:</span>
+                    <span class="stat-value" id="last24h-users">-</span>
+                </div>
+            </div>
+
+            <!-- Errors Card -->
+            <div class="card">
+                <h3>⚠️ Erros</h3>
+                <div class="stat-item">
+                    <span class="stat-label">Total:</span>
+                    <span class="stat-value" id="total-errors">-</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Hoje:</span>
+                    <span class="stat-value" id="today-errors">-</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Últimas 24h:</span>
+                    <span class="stat-value" id="last24h-errors">-</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="timestamp" id="last-update">
+            Última atualização: -
+        </div>
+    </div>
+
+    <script>
+        let refreshInterval;
+
+        // Função para formatar números
+        function formatNumber(num) {
+            return new Intl.NumberFormat('pt-BR').format(num);
+        }
+
+        // Função para formatar tempo
+        function formatUptime(seconds) {
+            const days = Math.floor(seconds / 86400);
+            const hours = Math.floor((seconds % 86400) / 3600);
+            const minutes = Math.floor((seconds % 3600) / 60);
+            const secs = seconds % 60;
+
+            if (days > 0) {
+                return `${days}d ${hours}h ${minutes}m`;
+            } else if (hours > 0) {
+                return `${hours}h ${minutes}m ${secs}s`;
+            } else if (minutes > 0) {
+                return `${minutes}m ${secs}s`;
+            } else {
+                return `${secs}s`;
+            }
+        }
+
+        // Função para atualizar dados
+        async function refreshData() {
+            try {
+                document.getElementById('loading').style.display = 'block';
+                document.getElementById('error').style.display = 'none';
+                document.getElementById('dashboard').style.display = 'none';
+
+                const [healthResponse, statsResponse, stats24hResponse] = await Promise.all([
+                    fetch('/monitoring/health'),
+                    fetch('/monitoring/stats'),
+                    fetch('/monitoring/stats/24h')
+                ]);
+
+                if (!healthResponse.ok || !statsResponse.ok || !stats24hResponse.ok) {
+                    throw new Error('Erro ao carregar dados');
+                }
+
+                const health = await healthResponse.json();
+                const stats = await statsResponse.json();
+                const stats24h = await stats24hResponse.json();
+
+                // Atualizar status do sistema
+                document.getElementById('health-status').className = 
+                    `status-indicator ${health.status === 'healthy' ? 'status-healthy' : 'status-unhealthy'}`;
+                document.getElementById('system-status').textContent = 
+                    health.status === 'healthy' ? 'Saudável' : 'Com problemas';
+                document.getElementById('uptime').textContent = health.uptimeFormatted;
+                document.getElementById('redis-status').textContent = 
+                    health.redis.connected ? 'Conectado' : 'Desconectado';
+                document.getElementById('memory-usage').textContent = 
+                    `${health.memory.used}MB / ${health.memory.total}MB`;
+
+                // Atualizar mensagens
+                document.getElementById('total-messages').textContent = formatNumber(stats.messages.total);
+                document.getElementById('today-messages').textContent = formatNumber(stats.messages.today);
+                document.getElementById('last24h-messages').textContent = formatNumber(stats24h.messages);
+
+                // Atualizar usuários
+                document.getElementById('active-users').textContent = formatNumber(stats.users.active);
+                document.getElementById('today-users').textContent = formatNumber(stats.users.today);
+                document.getElementById('last24h-users').textContent = formatNumber(stats24h.users);
+
+                // Atualizar erros
+                document.getElementById('total-errors').textContent = formatNumber(stats.errors.total);
+                document.getElementById('today-errors').textContent = formatNumber(stats.errors.today);
+                document.getElementById('last24h-errors').textContent = formatNumber(stats24h.errors);
+
+                // Atualizar timestamp
+                document.getElementById('last-update').textContent = 
+                    `Última atualização: ${new Date().toLocaleString('pt-BR')}`;
+
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('dashboard').style.display = 'grid';
+
+            } catch (error) {
+                console.error('Erro ao carregar dados:', error);
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('error').style.display = 'block';
+            }
+        }
+
+        // Função para iniciar auto-refresh
+        function startAutoRefresh() {
+            refreshInterval = setInterval(refreshData, 30000); // Atualizar a cada 30 segundos
+        }
+
+        // Função para parar auto-refresh
+        function stopAutoRefresh() {
+            if (refreshInterval) {
+                clearInterval(refreshInterval);
+            }
+        }
+
+        // Inicializar dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            refreshData();
+            startAutoRefresh();
+        });
+
+        // Parar auto-refresh quando a página não estiver visível
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden) {
+                stopAutoRefresh();
+            } else {
+                startAutoRefresh();
+            }
+        });
+    </script>
+</body>
+</html>
+
