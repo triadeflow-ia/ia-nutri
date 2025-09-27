@@ -118,6 +118,12 @@ async function handleTextMessage(message, phoneNumber, profileName, phoneNumberI
     return;
   }
 
+  // Comando especial para resetar memória
+  if (userMessage.includes("/reset") || userMessage.includes("reset") || userMessage.includes("zerar memória")) {
+    await resetUserMemory(phoneNumber, phoneNumberId, res);
+    return;
+  }
+
   // Buffer de mensagens
   if (!messageBuffers.has(phoneNumber)) {
     messageBuffers.set(phoneNumber, []);
@@ -419,3 +425,36 @@ async function handleTokenLimit(phoneNumber, threadId, formattedMessage) {
   
   return newThreadId;
 }
+
+// Função para resetar memória de um usuário específico
+export const resetUserMemory = async (phoneNumber, phoneNumberId, res) => {
+  try {
+    console.log(`🔄 Iniciando reset de memória para: ${phoneNumber}`);
+    
+    // Resetar memória no Redis e OpenAI
+    await redisService.resetUserMemory(phoneNumber);
+    
+    // Enviar confirmação para o usuário
+    await whatsappService.sendReply(
+      phoneNumberId,
+      config.whatsapp.graphApiToken,
+      phoneNumber,
+      "🧹 *Memória resetada com sucesso!*\n\nAgora posso começar uma nova conversa do zero. Como posso te ajudar?",
+      res
+    );
+    
+    console.log(`✅ Memória resetada para ${phoneNumber}`);
+    
+  } catch (error) {
+    console.error(`❌ Erro ao resetar memória para ${phoneNumber}:`, error);
+    
+    // Enviar mensagem de erro
+    await whatsappService.sendReply(
+      phoneNumberId,
+      config.whatsapp.graphApiToken,
+      phoneNumber,
+      "❌ Ocorreu um erro ao resetar a memória. Tente novamente em alguns instantes.",
+      res
+    );
+  }
+};

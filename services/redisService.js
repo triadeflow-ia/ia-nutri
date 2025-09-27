@@ -94,3 +94,58 @@ export async function getTemporaryState(key) {
 export async function deleteTemporaryState(key) {
   return await redisClient.del(`temp:${key}`);
 }
+
+// Função para resetar completamente a memória de um número
+export async function resetUserMemory(phoneNumber) {
+  try {
+    console.log(`🔄 Resetando memória para o número: ${phoneNumber}`);
+    
+    // 1. Obter thread ID atual
+    const threadId = await getThreadId(phoneNumber);
+    
+    // 2. Deletar thread ID do Redis
+    await deleteThreadId(phoneNumber);
+    
+    // 3. Limpar conversação se thread ID existir
+    if (threadId) {
+      await clearConversation(phoneNumber, threadId);
+      
+      // 4. Deletar thread da OpenAI
+      try {
+        const { deleteThread } = await import('./openaiService.js');
+        await deleteThread(threadId);
+        console.log(`✅ Thread ${threadId} deletado da OpenAI`);
+      } catch (error) {
+        console.error('Erro ao deletar thread da OpenAI:', error.message);
+      }
+    }
+    
+    // 5. Limpar todas as conversações do número (caso haja múltiplas)
+    const conversationKeys = await redisClient.keys(`conversation:${phoneNumber}:*`);
+    for (const key of conversationKeys) {
+      await redisClient.del(key);
+    }
+    
+    // 6. Limpar mensagens individuais do número
+    const messageKeys = await redisClient.keys(`message:*`);
+    for (const key of messageKeys) {
+      const messageData = await redisClient.hGetAll(key);
+      if (messageData.phoneNumber === phoneNumber) {
+        await redisClient.del(key);
+      }
+    }
+    
+    // 7. Limpar estados temporários do número
+    const tempKeys = await redisClient.keys(`temp:${phoneNumber}*`);
+    for (const key of tempKeys) {
+      await redisClient.del(key);
+    }
+    
+    console.log(`✅ Memória resetada com sucesso para ${phoneNumber}`);
+    return true;
+    
+  } catch (error) {
+    console.error(`❌ Erro ao resetar memória para ${phoneNumber}:`, error);
+    throw error;
+  }
+}
