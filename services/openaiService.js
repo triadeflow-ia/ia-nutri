@@ -141,15 +141,43 @@ export async function summarizeContext(threadId) {
 }
 
 export async function runAssistant(threadId, whatsappData) {
-  const run = await openai.beta.threads.runs.create(threadId, {
-    assistant_id: config.openai.assistantId
-  });
-  
-  const completedRun = await waitForRunCompletion(threadId, run.id, whatsappData);
-  const messagesResponse = await openai.beta.threads.messages.list(threadId);
-  const assistantResponse = messagesResponse.data.find(m => m.role === 'assistant').content[0].text.value;
-  
-  return assistantResponse;
+  console.log('Usando chat.completions API...');
+  return await getDirectAPIResponse(threadId);
+}
+
+async function getDirectAPIResponse(threadId) {
+  try {
+    // Obter mensagens do thread
+    const messagesResponse = await openai.beta.threads.messages.list(threadId);
+    const messages = messagesResponse.data.map(msg => ({
+      role: msg.role,
+      content: msg.content[0].text.value
+    }));
+
+    // Usar API direta
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        {
+          role: "system",
+          content: `Você é um assistente especializado em nutrição e bem-estar. 
+          
+Responda de forma amigável e profissional, sempre focando em dicas saudáveis e científicas.
+Seja conciso mas informativo. Use emojis ocasionalmente para tornar a conversa mais amigável.
+Se não souber algo específico, seja honesto e sugira consultar um profissional.
+`
+        },
+        ...messages.slice(-10) // Últimas 10 mensagens para contexto
+      ],
+      max_tokens: 2000,
+      temperature: 0.7
+    });
+
+    return response.choices[0].message.content;
+  } catch (error) {
+    console.error('Erro ao obter resposta da OpenAI:', error);
+    return "Desculpe, tive um problema temporário ao processar sua mensagem. Pode tentar novamente?";
+  }
 }
 
 async function waitForRunCompletion(threadId, runId, whatsappData, maxRetries = 15, delay = 2000) {
