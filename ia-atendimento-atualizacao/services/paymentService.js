@@ -140,6 +140,7 @@ export const createPaymentLink = async (phoneNumber, planType = 'monthly') => {
         phone_number: phoneNumber,
         plan_type: planType
       },
+      // Não incluir customer_email - deixar o usuário preencher no checkout
     });
 
     console.log(`✅ Checkout session criada: ${session.id}`);
