@@ -25,7 +25,7 @@ app.set('trust proxy', 1);
 
 // IMPORTANTE: Stripe webhook DEVE vir ANTES do bodyParser
 // Stripe precisa do raw body para verificar a assinatura
-app.use('/stripe/webhook', express.raw({ type: 'application/json' }), stripeRoutes);
+app.use('/stripe', express.raw({ type: 'application/json' }), stripeRoutes);
 
 // Demais rotas usam JSON parser
 app.use(bodyParser.json());
