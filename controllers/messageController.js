@@ -588,7 +588,7 @@ const handlePlanRequest = async (phoneNumber, phoneNumberId, planType, res) => {
     }
     
     // Enviar mensagem com plano específico
-    const planMessage = paymentService.getSpecificPlanMessage(planType, phoneNumber);
+    const planMessage = await paymentService.getSpecificPlanMessage(planType, phoneNumber);
     await whatsappService.sendReply(
       phoneNumberId,
       config.whatsapp.graphApiToken,

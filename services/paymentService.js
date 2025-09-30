@@ -143,7 +143,44 @@ export const createPaymentLink = async (phoneNumber, planType = 'monthly') => {
 // Função para obter mensagem de pagamento com link dinâmico
 export const getPaymentRequiredMessageWithLink = async (phoneNumber) => {
   try {
-    // Usar links diretos do Stripe (mais confiável)
+    console.log(`💳 Criando links de pagamento dinâmicos para: ${phoneNumber}`);
+    
+    // Criar links dinâmicos para cada plano
+    const monthlyLink = await createPaymentLink(phoneNumber, 'monthly');
+    const quarterlyLink = await createPaymentLink(phoneNumber, 'quarterly');
+    const annualLink = await createPaymentLink(phoneNumber, 'annual');
+    
+    // Se conseguiu criar os links dinâmicos, usar eles
+    if (monthlyLink && quarterlyLink && annualLink) {
+      console.log(`✅ Links dinâmicos criados com sucesso`);
+      return `🔒 Acesso Restrito
+
+Este recurso é exclusivo para assinantes.
+
+Para liberar o assistente nutricional e receber orientações personalizadas, escolha um dos planos abaixo:
+
+💳 Planos disponíveis:
+
+📅 Mensal — R$ 29,90/mês
+${monthlyLink}
+
+📅 Trimestral — R$ 79,90 a cada 3 meses
+${quarterlyLink}
+
+📅 Anual — R$ 299,90/ano (melhor custo-benefício)
+${annualLink}
+
+📋 Você terá acesso a:
+• Consultoria nutricional personalizada
+• Cardápios sob medida
+• Acompanhamento de progresso
+• Suporte 24h via WhatsApp
+
+⚠️ O acesso será liberado apenas para usuários com assinatura ativa.`;
+    }
+    
+    // Fallback para links estáticos
+    console.log(`⚠️ Usando links estáticos (fallback)`);
     return getPaymentRequiredMessage(phoneNumber);
   } catch (error) {
     console.error('Erro ao gerar mensagem de pagamento:', error);
@@ -178,26 +215,38 @@ export const detectPlanFromMessage = (message) => {
 };
 
 // Função para obter mensagem de plano específico
-export const getSpecificPlanMessage = (planType, phoneNumber) => {
+export const getSpecificPlanMessage = async (planType, phoneNumber) => {
   const planInfo = {
     monthly: {
       name: 'Mensal',
       price: 'R$ 29,90/mês',
-      link: 'https://buy.stripe.com/test_4gMeVdfk12tU6O13lh48002'
+      staticLink: 'https://buy.stripe.com/test_4gMeVdfk12tU6O13lh48002'
     },
     quarterly: {
       name: 'Trimestral',
       price: 'R$ 79,90 a cada 3 meses',
-      link: 'https://buy.stripe.com/test_aFacN5efX1pQb4h9JF48001'
+      staticLink: 'https://buy.stripe.com/test_aFacN5efX1pQb4h9JF48001'
     },
     annual: {
       name: 'Anual',
       price: 'R$ 299,90/ano',
-      link: 'https://buy.stripe.com/test_6oU14n8VD8Si6O12hd48000'
+      staticLink: 'https://buy.stripe.com/test_6oU14n8VD8Si6O12hd48000'
     }
   };
   
   const plan = planInfo[planType] || planInfo.monthly;
+  
+  // Tentar criar link dinâmico com metadata
+  let paymentLink = plan.staticLink;
+  try {
+    const dynamicLink = await createPaymentLink(phoneNumber, planType);
+    if (dynamicLink) {
+      paymentLink = dynamicLink;
+      console.log(`✅ Link dinâmico criado para plano ${planType}`);
+    }
+  } catch (error) {
+    console.error(`Erro ao criar link dinâmico, usando estático:`, error);
+  }
   
   return `🔒 Acesso Restrito
 
@@ -212,7 +261,7 @@ Este recurso é exclusivo para assinantes.
 • Suporte 24h via WhatsApp
 
 🔗 Para assinar agora:
-${plan.link}
+${paymentLink}
 
 ⚠️ O acesso será liberado apenas para usuários com assinatura ativa.`;
 };
