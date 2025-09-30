@@ -21,12 +21,14 @@ dotenv.config();
 
 const app = express();
 
-// Stripe webhook precisa do raw body
-app.use('/stripe/webhook', express.raw({ type: 'application/json' }));
+app.set('trust proxy', 1);
+
+// IMPORTANTE: Stripe webhook DEVE vir ANTES do bodyParser
+// Stripe precisa do raw body para verificar a assinatura
+app.use('/stripe/webhook', express.raw({ type: 'application/json' }), stripeRoutes);
 
 // Demais rotas usam JSON parser
 app.use(bodyParser.json());
-app.set('trust proxy', 1);
 app.use(limiter);
 
 const __filename = fileURLToPath(import.meta.url);
@@ -69,7 +71,7 @@ app.get('/health', (req, res) => {
 // Rotas
 app.use('/webhook', webhookRoutes);
 app.use('/audio', audioRoutes);
-app.use('/stripe', stripeRoutes);
+// Stripe já foi configurado acima com raw body
 app.use('/test', testRoutes);
 
 const PORT = process.env.PORT || 1337;
