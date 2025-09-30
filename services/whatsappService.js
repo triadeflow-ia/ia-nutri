@@ -293,3 +293,38 @@ export async function sendTemplate(phoneNumberId, whatsappToken, to, templateNam
     req.end();
   });
 }
+
+// Função específica para enviar template de boas-vindas
+export async function sendWelcomeTemplate(phoneNumberId, whatsappToken, to, userName = null) {
+  try {
+    console.log(`Enviando template de boas-vindas para: ${to}`);
+    
+    // Componentes do template (se o template tiver variáveis)
+    const components = [];
+    
+    // Se o template tiver variáveis de nome, adicionar componente
+    if (userName) {
+      components.push({
+        type: "body",
+        parameters: [
+          {
+            type: "text",
+            text: userName
+          }
+        ]
+      });
+    }
+    
+    return await sendTemplate(
+      phoneNumberId,
+      whatsappToken,
+      to,
+      'assistente_nutricional',
+      'pt_BR',
+      components
+    );
+  } catch (error) {
+    console.error('Erro ao enviar template de boas-vindas:', error);
+    throw error;
+  }
+}

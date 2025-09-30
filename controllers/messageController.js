@@ -10,6 +10,7 @@ import * as onboardingService from '../services/onboardingService.js';
 import * as anamneseService from '../services/anamneseService.js';
 import * as flowService from '../services/flowService.js';
 import * as alertService from '../services/alertService.js';
+import * as paymentService from '../services/paymentService.js';
 import { config } from '../config/index.js';
 import moment from 'moment-timezone';
 
@@ -125,6 +126,22 @@ async function handleTextMessage(message, phoneNumber, profileName, phoneNumberI
   // Comando especial para resetar memória
   if (userMessage.includes("/reset") || userMessage.includes("reset") || userMessage.includes("zerar memória")) {
     await resetUserMemory(phoneNumber, phoneNumberId, res);
+    return;
+  }
+
+  // Verificar se usuário quer iniciar o serviço
+  if (userMessage.includes("quero iniciar") || userMessage.includes("iniciar") || 
+      userMessage.includes("começar") || userMessage.includes("comecar")) {
+    console.log(`🚀 Usuário ${phoneNumber} solicitou início do serviço`);
+    await handleStartRequest(phoneNumber, phoneNumberId, profileName, res);
+    return;
+  }
+
+  // Verificar se usuário quer um plano específico
+  const requestedPlan = paymentService.detectPlanFromMessage(userMessage);
+  if (requestedPlan) {
+    console.log(`💳 Usuário ${phoneNumber} solicitou plano: ${requestedPlan}`);
+    await handlePlanRequest(phoneNumber, phoneNumberId, requestedPlan, res);
     return;
   }
 
@@ -495,5 +512,99 @@ const handleOnboardingResponse = async (phoneNumber, phoneNumberId, userMessage,
     
   } catch (error) {
     console.error('Error handling onboarding response:', error);
+  }
+};
+
+// Função para lidar com solicitação de início do serviço
+const handleStartRequest = async (phoneNumber, phoneNumberId, profileName, res) => {
+  try {
+    console.log(`🚀 Usuário ${phoneNumber} solicitou início do serviço`);
+    
+    // Verificar status de pagamento
+    const paymentStatus = await paymentService.checkPaymentStatus(phoneNumber);
+    
+    if (paymentStatus.hasPayment) {
+      console.log(`✅ Pagamento confirmado para ${phoneNumber}, iniciando onboarding`);
+      
+      // Verificar se já está em onboarding
+      const onboardingStatus = await onboardingService.getOnboardingStatus(phoneNumber);
+      if (onboardingStatus && onboardingStatus.status === 'completed') {
+        await whatsappService.sendReply(
+          phoneNumberId,
+          config.whatsapp.graphApiToken,
+          phoneNumber,
+          `Olá ${profileName}! 😊\n\nVocê já completou o onboarding e tem acesso completo ao assistente nutricional!\n\nComo posso te ajudar hoje?`
+        );
+        return;
+      }
+      
+      // Iniciar onboarding
+      await onboardingService.startOnboarding(phoneNumber, null, profileName);
+      
+    } else {
+      console.log(`❌ Pagamento não encontrado para ${phoneNumber}, enviando mensagem de pagamento necessário`);
+      
+      // Enviar mensagem de pagamento necessário com link dinâmico
+      const paymentMessage = await paymentService.getPaymentRequiredMessageWithLink(phoneNumber);
+      await whatsappService.sendReply(
+        phoneNumberId,
+        config.whatsapp.graphApiToken,
+        phoneNumber,
+        paymentMessage
+      );
+    }
+    
+  } catch (error) {
+    console.error('Erro ao processar solicitação de início:', error);
+    
+    // Enviar mensagem de erro
+    await whatsappService.sendReply(
+      phoneNumberId,
+      config.whatsapp.graphApiToken,
+      phoneNumber,
+      "❌ Ocorreu um erro ao processar sua solicitação. Tente novamente em alguns instantes."
+    );
+  }
+};
+
+// Função para lidar com solicitação de plano específico
+const handlePlanRequest = async (phoneNumber, phoneNumberId, planType, res) => {
+  try {
+    console.log(`💳 Usuário ${phoneNumber} solicitou plano: ${planType}`);
+    
+    // Verificar status de pagamento primeiro
+    const paymentStatus = await paymentService.checkPaymentStatus(phoneNumber);
+    
+    if (paymentStatus.hasPayment) {
+      console.log(`✅ Usuário ${phoneNumber} já tem pagamento, enviando mensagem de boas-vindas`);
+      
+      await whatsappService.sendReply(
+        phoneNumberId,
+        config.whatsapp.graphApiToken,
+        phoneNumber,
+        `🎉 Você já tem uma assinatura ativa!\n\nDigite "Quero iniciar" para começar a usar o assistente nutricional.`
+      );
+      return;
+    }
+    
+    // Enviar mensagem com plano específico
+    const planMessage = paymentService.getSpecificPlanMessage(planType, phoneNumber);
+    await whatsappService.sendReply(
+      phoneNumberId,
+      config.whatsapp.graphApiToken,
+      phoneNumber,
+      planMessage
+    );
+    
+  } catch (error) {
+    console.error('Erro ao processar solicitação de plano:', error);
+    
+    // Enviar mensagem de erro
+    await whatsappService.sendReply(
+      phoneNumberId,
+      config.whatsapp.graphApiToken,
+      phoneNumber,
+      "❌ Ocorreu um erro ao processar sua solicitação. Tente novamente em alguns instantes."
+    );
   }
 };

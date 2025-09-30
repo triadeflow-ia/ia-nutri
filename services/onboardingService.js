@@ -5,7 +5,7 @@ import * as whatsappService from './whatsappService.js';
 import * as redisService from './redisService.js';
 import * as anamneseService from './anamneseService.js';
 
-export const startOnboarding = async (phoneNumber, session = null) => {
+export const startOnboarding = async (phoneNumber, session = null, userName = null) => {
   try {
     console.log(`🚀 Iniciando onboarding para: ${phoneNumber}`);
     
@@ -21,23 +21,36 @@ export const startOnboarding = async (phoneNumber, session = null) => {
       status: 'started',
       step: 'welcome',
       sessionId: session?.id,
+      userName: userName,
       timestamp: Date.now()
     });
 
     // Enviar mensagem de boas-vindas
-    await sendWelcomeMessage(phoneNumber);
+    await sendWelcomeMessage(phoneNumber, userName);
 
     } catch (error) {
     console.error('Error starting onboarding:', error);
   }
 };
 
-async function sendWelcomeMessage(phoneNumber) {
-  // Usar sempre mensagem normal para teste (sem template)
-  console.log('Enviando mensagem de boas-vindas normal (sem template)');
-
-  // Fallback: mensagem normal
-  const welcomeMessage = `🎉 *Bem-vindo(a) ao seu Assistente Nutricional!*
+async function sendWelcomeMessage(phoneNumber, userName = null) {
+  try {
+    console.log('Enviando template de boas-vindas: assistente_nutricional');
+    
+    // Usar a função específica para template de boas-vindas
+    await whatsappService.sendWelcomeTemplate(
+      config.whatsapp.phoneNumberId,
+      config.whatsapp.graphApiToken,
+      phoneNumber,
+      userName
+    );
+    
+    console.log('Template de boas-vindas enviado com sucesso');
+  } catch (error) {
+    console.error('Erro ao enviar template, usando fallback:', error);
+    
+    // Fallback: mensagem normal caso o template falhe
+    const welcomeMessage = `🎉 *Bem-vindo(a) ao seu Assistente Nutricional!*
 
 Parabéns por dar o primeiro passo em direção a uma vida mais saudável!
 
@@ -59,12 +72,13 @@ Responda:
 • ✅ *Sim* - para autorizar
 • ❌ *Não* - para não autorizar`;
 
-  await whatsappService.sendReply(
-    config.whatsapp.phoneNumberId,
-    config.whatsapp.graphApiToken,
-    phoneNumber,
-    welcomeMessage
-  );
+    await whatsappService.sendReply(
+      config.whatsapp.phoneNumberId,
+      config.whatsapp.graphApiToken,
+      phoneNumber,
+      welcomeMessage
+    );
+  }
 }
 
 export const handleConsentResponse = async (phoneNumber, consentGiven) => {
