@@ -105,18 +105,28 @@ Vamos começar criando seu perfil personalizado para oferecer o melhor atendimen
 export const createPaymentLink = async (phoneNumber, planType = 'monthly') => {
   try {
     if (!stripe) {
-      console.error('Stripe não configurado');
+      console.error('⚠️ Stripe não configurado');
       return null;
     }
 
-    const priceId = config.stripe.prices[planType];
+    // Price IDs hardcoded como fallback se não houver nas env vars
+    const hardcodedPrices = {
+      monthly: 'price_1SCuW4F9Wxiy3vIi7kIl9I3x',    // R$ 29,90/mês
+      quarterly: 'price_1SCuWXF9Wxiy3vIit5mGfFkH',  // R$ 79,90/3 meses
+      annual: 'price_1SCuWpF9Wxiy3vIi5MnHE8FU'      // R$ 299,90/ano
+    };
+
+    const priceId = config.stripe.prices?.[planType] || hardcodedPrices[planType];
+    
     if (!priceId) {
-      console.error(`Preço não encontrado para o plano: ${planType}`);
+      console.error(`❌ Preço não encontrado para o plano: ${planType}`);
       return null;
     }
+
+    console.log(`💳 Criando checkout session com Price ID: ${priceId} para ${phoneNumber}`);
 
     const session = await stripe.checkout.sessions.create({
-      payment_method_types: ['card', 'pix'],
+      payment_method_types: ['card'],
       line_items: [
         {
           price: priceId,
@@ -124,18 +134,19 @@ export const createPaymentLink = async (phoneNumber, planType = 'monthly') => {
         },
       ],
       mode: 'subscription',
-      success_url: `${config.server.url}/success?phone=${phoneNumber}`,
-      cancel_url: `${config.server.url}/cancel?phone=${phoneNumber}`,
+      success_url: `${config.server.url || 'https://ia-nutri-q4dy.onrender.com'}/success?phone=${phoneNumber}`,
+      cancel_url: `${config.server.url || 'https://ia-nutri-q4dy.onrender.com'}/cancel?phone=${phoneNumber}`,
       metadata: {
         phone_number: phoneNumber,
         plan_type: planType
       },
-      customer_email: null, // Será preenchido pelo usuário
     });
 
+    console.log(`✅ Checkout session criada: ${session.id}`);
     return session.url;
   } catch (error) {
-    console.error('Erro ao criar link de pagamento:', error);
+    console.error('❌ Erro ao criar link de pagamento:', error.message);
+    console.error('Detalhes:', error);
     return null;
   }
 };
