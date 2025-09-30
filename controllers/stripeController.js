@@ -4,9 +4,14 @@ import { config } from '../config/index.js';
 import * as whatsappService from '../services/whatsappService.js';
 import * as redisService from '../services/redisService.js';
 import * as onboardingService from '../services/onboardingService.js';
+import Stripe from 'stripe';
+
+// Inicializar Stripe
+const stripe = new Stripe(config.stripe.secretKey);
 
 export const handleStripeWebhook = async (req, res) => {
   try {
+    console.log('🔔 Stripe webhook received');
     const sig = req.headers['stripe-signature'];
     const endpointSecret = config.stripe.webhookSecret;
 
@@ -14,16 +19,25 @@ export const handleStripeWebhook = async (req, res) => {
 
     try {
       event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
+      console.log('✅ Webhook signature verified');
     } catch (err) {
-      console.error(`Webhook signature verification failed: ${err.message}`);
+      console.error(`❌ Webhook signature verification failed: ${err.message}`);
       return res.status(400).send(`Webhook Error: ${err.message}`);
     }
 
-    console.log(`Stripe webhook event received: ${event.type}`);
+    console.log(`📨 Stripe webhook event received: ${event.type}`);
 
     switch (event.type) {
       case 'checkout.session.completed':
         await handleCheckoutCompleted(event.data.object);
+        break;
+      
+      case 'checkout.session.expired':
+        console.log('⏰ Checkout session expired:', event.data.object.id);
+        break;
+      
+      case 'payment_intent.payment_failed':
+        await handlePaymentFailed(event.data.object);
         break;
       
       case 'customer.subscription.created':
@@ -39,8 +53,12 @@ export const handleStripeWebhook = async (req, res) => {
         await handleInvoicePaid(event.data.object);
         break;
       
+      case 'invoice.payment_failed':
+        console.log('❌ Invoice payment failed:', event.data.object.id);
+        break;
+      
       default:
-        console.log(`Unhandled event type: ${event.type}`);
+        console.log(`⚠️ Unhandled event type: ${event.type}`);
     }
 
     res.json({ received: true });
@@ -141,6 +159,19 @@ async function handleSubscriptionCancelled(subscription) {
     
   } catch (error) {
     console.error('Error handling subscription cancellation:', error);
+  }
+}
+
+async function handlePaymentFailed(paymentIntent) {
+  try {
+    console.log('❌ Payment failed:', paymentIntent.id);
+    console.log('Failure reason:', paymentIntent.last_payment_error?.message);
+    
+    // Aqui você pode adicionar lógica para notificar o usuário
+    // Porém, precisaríamos ter o phone number nos metadados
+    
+  } catch (error) {
+    console.error('Error handling payment failed:', error);
   }
 }
 

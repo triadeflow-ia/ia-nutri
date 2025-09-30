@@ -20,6 +20,11 @@ import testRoutes from './routes/test.js';
 dotenv.config();
 
 const app = express();
+
+// Stripe webhook precisa do raw body
+app.use('/stripe/webhook', express.raw({ type: 'application/json' }));
+
+// Demais rotas usam JSON parser
 app.use(bodyParser.json());
 app.set('trust proxy', 1);
 app.use(limiter);
