@@ -67,33 +67,30 @@ export const getPaymentRequiredMessage = (phoneNumber = null) => {
     annual: 'https://buy.stripe.com/test_6oU14n8VD8Si6O12hd48000' // R$ 299,90/ano
   };
   
-  return `🔒 *Acesso Restrito*
+  return `🔒 Acesso Restrito
 
-Para acessar o assistente nutricional, é necessário ter uma assinatura ativa.
+Este recurso é exclusivo para assinantes.
 
-📋 *O que você recebe:*
-• Consultoria nutricional personalizada
-• Criação de cardápios sob medida
-• Acompanhamento de progresso
-• Suporte 24/7 via WhatsApp
+Para liberar o assistente nutricional e receber orientações personalizadas, escolha um dos planos abaixo:
 
-💳 *Escolha seu plano:*
+💳 Planos disponíveis:
 
-📅 *Mensal - R$ 29,90/mês*
+📅 Mensal — R$ 29,90/mês
 ${paymentLinks.monthly}
 
-📅 *Trimestral - R$ 79,90 a cada 3 meses*
+📅 Trimestral — R$ 79,90 a cada 3 meses
 ${paymentLinks.quarterly}
 
-📅 *Anual - R$ 299,90/ano* (Melhor custo-benefício!)
+📅 Anual — R$ 299,90/ano (melhor custo-benefício)
 ${paymentLinks.annual}
 
-🔄 *Após o pagamento:*
-1. Volte aqui e digite "Quero iniciar"
-2. Receberá o template de boas-vindas
-3. Começará seu onboarding personalizado
+📋 Você terá acesso a:
+• Consultoria nutricional personalizada
+• Cardápios sob medida
+• Acompanhamento de progresso
+• Suporte 24h via WhatsApp
 
-*Precisa de ajuda?* Entre em contato conosco! 😊`;
+⚠️ O acesso será liberado apenas para usuários com assinatura ativa.`;
 };
 
 export const getWelcomeAfterPaymentMessage = (userName) => {
@@ -202,21 +199,20 @@ export const getSpecificPlanMessage = (planType, phoneNumber) => {
   
   const plan = planInfo[planType] || planInfo.monthly;
   
-  return `💳 *Plano ${plan.name} - ${plan.price}*
+  return `🔒 Acesso Restrito
 
-📋 *O que você recebe:*
+Este recurso é exclusivo para assinantes.
+
+💳 Plano ${plan.name} — ${plan.price}
+
+📋 Você terá acesso a:
 • Consultoria nutricional personalizada
-• Criação de cardápios sob medida
+• Cardápios sob medida
 • Acompanhamento de progresso
-• Suporte 24/7 via WhatsApp
+• Suporte 24h via WhatsApp
 
-🔗 *Para assinar agora:*
+🔗 Para assinar agora:
 ${plan.link}
 
-🔄 *Após o pagamento:*
-1. Volte aqui e digite "Quero iniciar"
-2. Receberá o template de boas-vindas
-3. Começará seu onboarding personalizado
-
-*Precisa de ajuda?* Entre em contato conosco! 😊`;
+⚠️ O acesso será liberado apenas para usuários com assinatura ativa.`;
 };
